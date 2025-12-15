@@ -1,0 +1,23 @@
+services:
+  mysql:
+    image: mysql:8.0.36
+    container_name: mysql
+    hostname: mysql
+    ports:
+      - "3306:3306"
+    privileged: true
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pass
+      MYSQL_RANDOM_ROOT_PASSWORD: yes
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+volumes:
+  mysql-data:
+
+
+# 查看 mysql 容器的日志，过滤 root 密码
+# docker logs mysql | grep "GENERATED ROOT PASSWORD"
