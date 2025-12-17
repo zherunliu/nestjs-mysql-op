@@ -35,6 +35,7 @@ export class User {
     comment: 'password',
   })
   password: string;
+  @Column()
   @Generated('uuid')
   uid: string;
   @CreateDateColumn({ type: 'timestamp' })
