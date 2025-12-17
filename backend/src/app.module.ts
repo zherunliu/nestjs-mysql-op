@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ManagerModule } from './manager/manager.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       retryDelay: 3000,
     }),
     UsersModule,
+    ManagerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
