@@ -7,10 +7,10 @@
       :prefix-icon="Search"
     />
     <el-button type="primary" @click="getList"> Search </el-button>
-    <el-button @click="openDialog"> Add User </el-button>
+    <el-button @click="addRow"> Add User </el-button>
   </div>
 
-  <el-table :data="tableData">
+  <el-table :data="tableData" table-layout="auto">
     <el-table-column type="expand">
       <template #default="props">
         <div>
@@ -38,7 +38,12 @@
       </template>
     </el-table-column>
     <el-table-column align="center" label="Age" prop="age" />
-    <el-table-column align="center" label="CreatedDate" prop="createdAt" />
+    <el-table-column
+      align="center"
+      label="CreatedDate"
+      prop="createdAt"
+      :formatter="formatDate"
+    />
     <el-table-column align="center" label="Uid" prop="uid" />
     <el-table-column align="center" label="Actions">
       <template #default="scope">
@@ -51,23 +56,29 @@
       </template>
     </el-table-column>
   </el-table>
-  <el-dialog v-model="dialogFormVisible" title="Add User" width="500">
-    <el-form :model="form">
-      <el-form-item label="Name" :label-width="formLabelWidth">
+  <el-dialog
+    style="padding-right: 50px"
+    v-model="dialogFormVisible"
+    title="Add User"
+    width="500"
+  >
+    <el-form ref="rule-form-ref" :rules="rules" :model="form">
+      <el-form-item label="Name" prop="name" :label-width="formLabelWidth">
         <el-input v-model="form.name" />
       </el-form-item>
-      <el-form-item label="Age" :label-width="formLabelWidth">
-        <el-input v-model="form.age" />
+      <el-form-item label="Age" prop="age" :label-width="formLabelWidth">
+        <el-input v-model.number="form.age" />
       </el-form-item>
-      <el-form-item label="Gender" :label-width="formLabelWidth">
+      <el-form-item label="Gender" prop="gender" :label-width="formLabelWidth">
         <el-select v-model="form.gender" placeholder="Please select a gender">
           <el-option label="Female" value="female" />
           <el-option label="Male" value="male" />
         </el-select>
       </el-form-item>
       <el-form-item
-        v-if="form.id === null"
+        v-if="form.id === undefined"
         label="Password"
+        prop="password"
         :label-width="formLabelWidth"
       >
         <el-input type="password" v-model="form.password" />
@@ -89,7 +100,9 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="dialogFormVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="save"> Confirm </el-button>
+        <el-button type="primary" @click="save(ruleFormRef)">
+          Confirm
+        </el-button>
       </div>
     </template>
   </el-dialog>
@@ -97,16 +110,24 @@
 
 <script lang="ts" setup>
 import { Male, Female, Search } from "@element-plus/icons-vue";
-import { getUserList, addUser, updateUser, deleteUser } from "./server";
-import { ref, reactive, onMounted } from "vue";
+import {
+  getUserList,
+  addUser,
+  updateUser,
+  deleteUser,
+  type IUserDto,
+} from "./server";
+import { ref, reactive, onMounted, useTemplateRef } from "vue";
+import dayjs from "dayjs";
+import { type FormInstance, type FormRules } from "element-plus";
 
 const formLabelWidth = "120px";
 const dialogFormVisible = ref(false);
 const search = reactive({
   keyWord: "",
 });
-const form = reactive({
-  id: null,
+const defaultForm: IUserDto = {
+  id: undefined,
   name: "",
   age: null,
   gender: "",
@@ -116,13 +137,38 @@ const form = reactive({
     nickname: "",
     bio: "",
   },
-});
+};
 const tableData = ref([]);
-const resetFrom = reactive({ ...form });
+const form = reactive<IUserDto>({ ...defaultForm });
 
-const openDialog = () => {
+const ruleFormRef = useTemplateRef<FormInstance>("rule-form-ref");
+const rules = reactive<FormRules<IUserDto>>({
+  name: [{ required: true, message: "Please input name", trigger: "blur" }],
+  age: [
+    {
+      type: "number",
+      required: true,
+      message: "Please input age",
+      trigger: "blur",
+    },
+  ],
+  gender: [
+    {
+      required: true,
+      message: "Please select a gender",
+      trigger: "blur",
+    },
+  ],
+  password: [
+    { required: true, message: "Please input password", trigger: "blur" },
+  ],
+});
+
+const addRow = () => {
   dialogFormVisible.value = true;
-  Object.assign(form, resetFrom);
+  // 不能深拷贝
+  // Object.assign(form, defaultForm);
+  Object.assign(form, JSON.parse(JSON.stringify(defaultForm)));
 };
 
 const getList = async () => {
@@ -130,22 +176,34 @@ const getList = async () => {
   tableData.value = list;
 };
 
-const save = async () => {
-  if (form.id) await updateUser(form);
-  else await addUser(form);
-  dialogFormVisible.value = false;
-  getList();
+const save = async (validate: FormInstance | null) => {
+  try {
+    await validate?.validate();
+    if (form.id) await updateUser(form);
+    else await addUser(form);
+    ElMessage({ message: "Saved successfully", type: "success" });
+    dialogFormVisible.value = false;
+    getList();
+  } catch (error) {
+    ElMessage({ message: "Please check the form fields.", type: "error" });
+    console.log("Form validation failed:", error);
+    return;
+  }
 };
 
-const editRow = async (row) => {
+const editRow = async (row: IUserDto) => {
   dialogFormVisible.value = true;
   Object.assign(form, row);
-  save();
 };
 
-const deleteRow = async (row) => {
+const deleteRow = async (row: IUserDto) => {
   await deleteUser(row);
   getList();
+};
+
+const formatDate = (row: IUserDto) => {
+  if (!row.createdAt) return "-";
+  return dayjs(row.createdAt).format("YYYY-MM-DD HH:mm:ss");
 };
 
 onMounted(getList);
