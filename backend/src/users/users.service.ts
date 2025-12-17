@@ -34,6 +34,9 @@ export class UsersService {
         // 模糊查询
         name: Like(`%${query.keyWord}%`),
       },
+      order: {
+        id: 'DESC',
+      },
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
     });
