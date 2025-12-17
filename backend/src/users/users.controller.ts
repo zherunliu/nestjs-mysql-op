@@ -11,7 +11,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { type IQuery } from './users.service';
+import type { IQuery, ITagParams } from './users.service';
 
 @Controller('users')
 export class UsersController {
@@ -20,6 +20,11 @@ export class UsersController {
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
+  }
+
+  @Post('add/tags')
+  addTags(@Body() params: ITagParams) {
+    return this.usersService.addTags(params);
   }
 
   @Get()

@@ -6,6 +6,8 @@ import {
   updateUser,
   deleteUser,
   type IUserDto,
+  type IQuery,
+  addTags,
 } from "./server";
 import { ref, reactive, onMounted, useTemplateRef } from "vue";
 import dayjs from "dayjs";
@@ -99,7 +101,7 @@ const formatDate = (row: IUserDto) => {
 };
 
 const totalSize = ref(0);
-const search = reactive({
+const search = reactive<IQuery>({
   keyWord: "",
   page: 1,
   pageSize: 5,
@@ -115,10 +117,31 @@ const handleCurrentChange = (pageVal: number) => {
   getList();
 };
 
+const isShowTag = ref(false);
+const tags = ref<string[]>([]);
+const tagRow = ref<IUserDto>({} as IUserDto);
+
+const openTagDialog = (row: IUserDto) => {
+  isShowTag.value = true;
+  tagRow.value = row;
+};
+
+const handleAddTag = async () => {
+  if (tags.value.length === 0) {
+    ElMessage({ message: "Please select at least one tag.", type: "warning" });
+    return;
+  }
+  await addTags({ tags: tags.value, userId: tagRow.value.id! });
+  ElMessage({ message: "Saved successfully", type: "success" });
+  isShowTag.value = false;
+  tags.value = [];
+};
+
 onMounted(getList);
 </script>
 
 <template>
+  <!-- Search Bar -->
   <div style="display: flex">
     <el-input
       v-model="search.keyWord"
@@ -130,6 +153,7 @@ onMounted(getList);
     <el-button @click="addRow"> Add User </el-button>
   </div>
 
+  <!-- Table -->
   <el-table :data="tableData" table-layout="auto">
     <el-table-column type="expand">
       <template #default="props">
@@ -173,6 +197,9 @@ onMounted(getList);
         <el-button type="danger" size="small" @click="deleteRow(scope.row)"
           >Delete</el-button
         >
+        <el-button size="small" @click="openTagDialog(scope.row)"
+          >Add Tag</el-button
+        >
       </template>
     </el-table-column>
   </el-table>
@@ -186,6 +213,7 @@ onMounted(getList);
     @current-change="handleCurrentChange"
     style="float: right; margin-top: 20px"
   />
+
   <!-- Dialog (Add User / Edit User) -->
   <el-dialog
     style="padding-right: 50px"
@@ -234,6 +262,23 @@ onMounted(getList);
         <el-button type="primary" @click="save(ruleFormRef)">
           Confirm
         </el-button>
+      </div>
+    </template>
+  </el-dialog>
+
+  <!-- Dialog Add Tag -->
+  <el-dialog v-model="isShowTag" title="Add Tag" width="30%">
+    <el-select v-model="tags" multiple>
+      <el-option value="Product">Product</el-option>
+      <el-option value="Research">Research</el-option>
+      <el-option value="Development">Development</el-option>
+      <el-option value="Operation">Operation</el-option>
+      <el-option value="Finance">Finance</el-option>
+    </el-select>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="isShowTag = false">Cancel</el-button>
+        <el-button type="primary" @click="handleAddTag"> Confirm </el-button>
       </div>
     </template>
   </el-dialog>

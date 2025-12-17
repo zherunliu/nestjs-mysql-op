@@ -4,6 +4,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { Tag } from './entities/tag.entity';
 
 export interface IQuery {
   keyWord: string;
@@ -11,10 +12,16 @@ export interface IQuery {
   pageSize: number;
 }
 
+export interface ITagParams {
+  tags: string[];
+  userId: number;
+}
+
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly user: Repository<User>,
+    @InjectRepository(Tag) private readonly tag: Repository<Tag>,
   ) {}
 
   create(createUserDto: CreateUserDto) {
@@ -30,6 +37,7 @@ export class UsersService {
 
   async find(query: IQuery) {
     const data = await this.user.find({
+      relations: ['tags'],
       where: {
         // 模糊查询
         name: Like(`%${query.keyWord}%`),
@@ -55,5 +63,21 @@ export class UsersService {
 
   remove(id: number) {
     return this.user.delete(id);
+  }
+
+  async addTags(params: ITagParams) {
+    const userInfo = await this.user.findOne({ where: { id: params.userId } });
+    const tagList: Tag[] = [];
+    for (const tagName of params.tags) {
+      const tagEntity = new Tag();
+      tagEntity.name = tagName;
+      await this.tag.save(tagEntity);
+      tagList.push(tagEntity);
+    }
+    if (userInfo) {
+      userInfo.tags = tagList;
+      await this.user.save(userInfo);
+    }
+    return true;
   }
 }

@@ -16,7 +16,18 @@ export interface IUserDto {
   createdAt?: string;
 }
 
-export const getUserList = (data: { keyWord: string }) =>
+export interface IQuery {
+  keyWord: string;
+  page: number;
+  pageSize: number;
+}
+
+export interface ITagParams {
+  tags: string[];
+  userId: number;
+}
+
+export const getUserList = (data: IQuery) =>
   axios.get("/users", { params: data }).then((res) => res.data);
 
 export const addUser = (data: IUserDto) =>
@@ -27,3 +38,6 @@ export const updateUser = (data: IUserDto) =>
 
 export const deleteUser = (data: IUserDto) =>
   axios.delete(`/users/${data.id}`).then((res) => res.data);
+
+export const addTags = (data: ITagParams) =>
+  axios.post("/users/add/tags", data).then((res) => res.data);

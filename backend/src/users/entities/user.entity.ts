@@ -4,7 +4,9 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   Generated,
+  OneToMany,
 } from 'typeorm';
+import { Tag } from './tag.entity';
 
 export enum Gender {
   MALE = 'male',
@@ -48,4 +50,7 @@ export class User {
   // 使用 JSON.stringify(p) 存储
   @Column({ type: 'simple-json', nullable: true })
   profile: IProfile;
+
+  @OneToMany(() => Tag, (tag) => tag.user)
+  tags: Tag[];
 }
