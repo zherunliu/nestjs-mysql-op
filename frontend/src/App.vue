@@ -1,3 +1,123 @@
+<script lang="ts" setup>
+import { Male, Female, Search } from "@element-plus/icons-vue";
+import {
+  getUserList,
+  addUser,
+  updateUser,
+  deleteUser,
+  type IUserDto,
+} from "./server";
+import { ref, reactive, onMounted, useTemplateRef } from "vue";
+import dayjs from "dayjs";
+import { type FormInstance, type FormRules } from "element-plus";
+
+const formLabelWidth = "120px";
+const dialogFormVisible = ref(false);
+const dialogTitle = ref("Add User");
+
+const defaultForm: IUserDto = {
+  id: undefined,
+  name: "",
+  age: null,
+  gender: "",
+  password: "",
+  techs: [],
+  profile: {
+    nickname: "",
+    bio: "",
+  },
+};
+const tableData = ref([]);
+const form = reactive<IUserDto>({ ...defaultForm });
+
+const ruleFormRef = useTemplateRef<FormInstance>("rule-form-ref");
+const rules = reactive<FormRules<IUserDto>>({
+  name: [{ required: true, message: "Please input name", trigger: "blur" }],
+  age: [
+    {
+      type: "number",
+      required: true,
+      message: "Please input age",
+      trigger: "blur",
+    },
+  ],
+  gender: [
+    {
+      required: true,
+      message: "Please select a gender",
+      trigger: "blur",
+    },
+  ],
+  password: [
+    { required: true, message: "Please input password", trigger: "blur" },
+  ],
+});
+
+const addRow = () => {
+  dialogFormVisible.value = true;
+  dialogTitle.value = "Add User";
+  // 不能深拷贝
+  // Object.assign(form, defaultForm);
+  Object.assign(form, JSON.parse(JSON.stringify(defaultForm)));
+};
+
+const getList = async () => {
+  const list = await getUserList(search);
+  tableData.value = list?.data ?? [];
+  totalSize.value = list?.total ?? 0;
+};
+
+const save = async (validate: FormInstance | null) => {
+  try {
+    await validate?.validate();
+    if (form.id) await updateUser(form);
+    else await addUser(form);
+    ElMessage({ message: "Saved successfully", type: "success" });
+    dialogFormVisible.value = false;
+    getList();
+  } catch (error) {
+    ElMessage({ message: "Please check the form fields.", type: "error" });
+    console.log("Form validation failed:", error);
+    return;
+  }
+};
+
+const editRow = async (row: IUserDto) => {
+  dialogFormVisible.value = true;
+  dialogTitle.value = "Edit User";
+  Object.assign(form, row);
+};
+
+const deleteRow = async (row: IUserDto) => {
+  await deleteUser(row);
+  getList();
+};
+
+const formatDate = (row: IUserDto) => {
+  if (!row.createdAt) return "-";
+  return dayjs(row.createdAt).format("YYYY-MM-DD HH:mm:ss");
+};
+
+const totalSize = ref(0);
+const search = reactive({
+  keyWord: "",
+  page: 1,
+  pageSize: 5,
+});
+
+const handleSizeChange = (sizeVal: number) => {
+  search.pageSize = sizeVal;
+  getList();
+};
+
+const handleCurrentChange = (pageVal: number) => {
+  search.page = pageVal;
+  getList();
+};
+
+onMounted(getList);
+</script>
+
 <template>
   <div style="display: flex">
     <el-input
@@ -56,10 +176,21 @@
       </template>
     </el-table-column>
   </el-table>
+  <el-pagination
+    v-model:current-page="search.page"
+    v-model:page-size="search.pageSize"
+    :page-sizes="[5, 10, 15, 20]"
+    layout="sizes, prev, pager, next, jumper"
+    :total="totalSize"
+    @size-change="handleSizeChange"
+    @current-change="handleCurrentChange"
+    style="float: right; margin-top: 20px"
+  />
+  <!-- Dialog (Add User / Edit User) -->
   <el-dialog
     style="padding-right: 50px"
     v-model="dialogFormVisible"
-    title="Add User"
+    :title="dialogTitle"
     width="500"
   >
     <el-form ref="rule-form-ref" :rules="rules" :model="form">
@@ -76,7 +207,7 @@
         </el-select>
       </el-form-item>
       <el-form-item
-        v-if="form.id === undefined"
+        v-if="dialogTitle === 'Add User'"
         label="Password"
         prop="password"
         :label-width="formLabelWidth"
@@ -107,104 +238,3 @@
     </template>
   </el-dialog>
 </template>
-
-<script lang="ts" setup>
-import { Male, Female, Search } from "@element-plus/icons-vue";
-import {
-  getUserList,
-  addUser,
-  updateUser,
-  deleteUser,
-  type IUserDto,
-} from "./server";
-import { ref, reactive, onMounted, useTemplateRef } from "vue";
-import dayjs from "dayjs";
-import { type FormInstance, type FormRules } from "element-plus";
-
-const formLabelWidth = "120px";
-const dialogFormVisible = ref(false);
-const search = reactive({
-  keyWord: "",
-});
-const defaultForm: IUserDto = {
-  id: undefined,
-  name: "",
-  age: null,
-  gender: "",
-  password: "",
-  techs: [],
-  profile: {
-    nickname: "",
-    bio: "",
-  },
-};
-const tableData = ref([]);
-const form = reactive<IUserDto>({ ...defaultForm });
-
-const ruleFormRef = useTemplateRef<FormInstance>("rule-form-ref");
-const rules = reactive<FormRules<IUserDto>>({
-  name: [{ required: true, message: "Please input name", trigger: "blur" }],
-  age: [
-    {
-      type: "number",
-      required: true,
-      message: "Please input age",
-      trigger: "blur",
-    },
-  ],
-  gender: [
-    {
-      required: true,
-      message: "Please select a gender",
-      trigger: "blur",
-    },
-  ],
-  password: [
-    { required: true, message: "Please input password", trigger: "blur" },
-  ],
-});
-
-const addRow = () => {
-  dialogFormVisible.value = true;
-  // 不能深拷贝
-  // Object.assign(form, defaultForm);
-  Object.assign(form, JSON.parse(JSON.stringify(defaultForm)));
-};
-
-const getList = async () => {
-  const list = await getUserList(search);
-  tableData.value = list;
-};
-
-const save = async (validate: FormInstance | null) => {
-  try {
-    await validate?.validate();
-    if (form.id) await updateUser(form);
-    else await addUser(form);
-    ElMessage({ message: "Saved successfully", type: "success" });
-    dialogFormVisible.value = false;
-    getList();
-  } catch (error) {
-    ElMessage({ message: "Please check the form fields.", type: "error" });
-    console.log("Form validation failed:", error);
-    return;
-  }
-};
-
-const editRow = async (row: IUserDto) => {
-  dialogFormVisible.value = true;
-  Object.assign(form, row);
-};
-
-const deleteRow = async (row: IUserDto) => {
-  await deleteUser(row);
-  getList();
-};
-
-const formatDate = (row: IUserDto) => {
-  if (!row.createdAt) return "-";
-  return dayjs(row.createdAt).format("YYYY-MM-DD HH:mm:ss");
-};
-
-onMounted(getList);
-</script>

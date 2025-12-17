@@ -11,6 +11,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { type IQuery } from './users.service';
 
 @Controller('users')
 export class UsersController {
@@ -22,7 +23,7 @@ export class UsersController {
   }
 
   @Get()
-  find(@Query() query: { keyWord: string }) {
+  find(@Query() query: IQuery) {
     return this.usersService.find(query);
   }
 
