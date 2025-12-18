@@ -21,3 +21,10 @@ volumes:
 
 # 查看 mysql 容器的日志，过滤 root 密码
 # docker logs mysql | grep "GENERATED ROOT PASSWORD"
+
+# 连接到 mysql 容器
+# docker exec -it mysql mysql -u user -p
+
+# 赋予 user 用户对 mydb 数据库（for prisma）的所有权限
+# GRANT ALL PRIVILEGES ON mydb.* TO 'user'@'%' WITH GRANT OPTION;
+# FLUSH PRIVILEGES;
