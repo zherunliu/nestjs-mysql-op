@@ -30,4 +30,15 @@ export class AppService {
       data: body,
     });
   }
+
+  async findArticle(authorId: number) {
+    return await this.prismaService.article.findFirst({
+      where: {
+        authorId: authorId,
+      },
+      include: {
+        author: true,
+      },
+    });
+  }
 }

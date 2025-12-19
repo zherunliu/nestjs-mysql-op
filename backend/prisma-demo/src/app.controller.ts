@@ -32,4 +32,9 @@ export class AppController {
   updatePerson(@Query('id') id: string, @Body() body: { name: string }) {
     return this.appService.update(+id, body);
   }
+
+  @Get('findArticle')
+  findArticle(@Query('authorId') authorId: string) {
+    return this.appService.findArticle(+authorId);
+  }
 }
