@@ -4,12 +4,30 @@ import { PrismaService } from './prisma/prisma.service';
 @Injectable()
 export class AppService {
   constructor(private readonly prismaService: PrismaService) {}
-  async getHello() {
-    const res = await this.prismaService.person.create({
-      data: {
-        name: 'Rico White',
+  async add(body: { name: string }) {
+    return await this.prismaService.person.create({
+      data: body,
+    });
+  }
+
+  async findAll() {
+    return await this.prismaService.person.findMany();
+  }
+
+  async delete(id: number) {
+    return await this.prismaService.person.delete({
+      where: {
+        id: id,
       },
     });
-    return res;
+  }
+
+  async update(id: number, body: { name: string }) {
+    return await this.prismaService.person.update({
+      where: {
+        id: id,
+      },
+      data: body,
+    });
   }
 }

@@ -27,4 +27,6 @@ volumes:
 
 # 赋予 user 用户对 mydb 数据库（for prisma）的所有权限
 # GRANT ALL PRIVILEGES ON mydb.* TO 'user'@'%' WITH GRANT OPTION;
+# ALTER USER 'user'@'%' IDENTIFIED WITH mysql_native_password BY 'pass';
+
 # FLUSH PRIVILEGES;
