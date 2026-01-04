@@ -2,6 +2,7 @@
 
 - typeORM
 - prisma
+- redis
 
 ## Prisma
 
